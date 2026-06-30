@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JTA Launcher</title>
+<style>
+:root {
+  --bg-deep: #0d0d1a;
+  --glass: rgba(255,255,255,0.06);
+  --border: rgba(255,255,255,0.08);
+  --accent: #ff7043;
+  --accent-glow: rgba(255,112,67,0.35);
+  --purple: #7c4dff;
+  --text: #e0e0e0;
+  --text-bright: #fff;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Microsoft YaHei','PingFang SC',sans-serif;
+  background:var(--bg-deep);color:var(--text);
+  overflow-x:hidden;line-height:1.6;
+}
+a{color:inherit;text-decoration:none}
+
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+header{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  backdrop-filter:blur(12px) saturate(1.4);
+  -webkit-backdrop-filter:blur(12px) saturate(1.4);
+  background:rgba(13,13,26,0.6);
+  border-bottom:1px solid var(--border);
+  transition:.4s;
+}
+header.scrolled{background:rgba(13,13,26,0.85);box-shadow:0 2px 30px rgba(0,0,0,.5)}
+nav{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding:12px 24px}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.3rem;font-weight:700;color:#fff}
+.logo img{width:36px;height:36px;border-radius:50%;border:2px solid var(--accent);animation:logoGlow 3s infinite alternate}
+@keyframes logoGlow{0%{box-shadow:0 0 6px var(--accent-glow)}100%{box-shadow:0 0 18px var(--accent-glow),0 0 40px rgba(124,77,255,.2)}}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-size:.95rem;color:var(--text);transition:.3s;position:relative}
+.nav-links a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:.3s}
+.nav-links a:hover{color:#fff}
+.nav-links a:hover::after{width:100%}
+
+.hero{
+  position:relative;z-index:1;
+  min-height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:100px 24px 60px;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:
+    radial-gradient(ellipse 60% 50% at var(--mx,50%) var(--my,80%), rgba(124,77,255,.18), transparent 60%),
+    radial-gradient(ellipse 50% 40% at var(--mx2,80%) var(--my2,20%), rgba(255,112,67,.14), transparent 55%),
+    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(13,13,26,.95), transparent 70%);
+}
+.float-block{position:absolute;width:14px;height:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);animation:float 8s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-30px) rotate(15deg)}}
+.float-block:nth-child(1){top:18%;left:8%}
+.float-block:nth-child(2){top:30%;right:12%;width:10px;height:10px;animation-delay:1.5s}
+.float-block:nth-child(3){bottom:25%;left:18%;animation-delay:3s}
+.float-block:nth-child(4){bottom:15%;right:22%;width:18px;height:18px;animation-delay:4.5s}
+
+.hero-inner{max-width:800px}
+.hero-badge{
+  display:inline-block;padding:6px 18px;border-radius:20px;
+  background:rgba(255,112,67,.12);border:1px solid rgba(255,112,67,.25);
+  color:var(--accent);font-size:.85rem;margin-bottom:24px;
+  animation:fadeUp .8s both;
+}
+.hero h1{
+  font-size:clamp(2.4rem,6vw,4rem);font-weight:800;
+  background:linear-gradient(135deg,#fff 30%,var(--accent),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  line-height:1.2;min-height:4.2rem;
+}
+.typed-cursor{display:inline-block;width:3px;background:#fff;margin-left:6px;animation:blink 1s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.hero-desc{margin:24px auto 40px;font-size:1.1rem;color:rgba(255,255,255,.65);max-width:640px;animation:fadeUp .8s .3s both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.entry-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;
+  max-width:800px;margin:0 auto;
+}
+.entry-card{
+  background:var(--glass);border:1px solid var(--border);border-radius:14px;
+  padding:28px 22px;text-align:center;cursor:pointer;
+  backdrop-filter:blur(8px);transition:.3s;
+}
+.entry-card:hover{transform:translateY(-6px);box-shadow:0 10px 40px rgba(0,0,0,.35);border-color:rgba(255,112,67,.3)}
+.entry-card .e-icon{font-size:2rem;margin-bottom:12px}
+.entry-card h3{color:#fff;font-size:1.1rem;margin-bottom:6px}
+.entry-card p{font-size:.85rem;color:rgba(255,255,255,.5)}
+
+.btn-group{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;animation:fadeUp .8s .45s both}
+.btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 32px;border-radius:28px;
+  font-size:1rem;font-weight:600;cursor:pointer;
+  border:none;transition:.25s;
+}
+.btn-primary{background:linear-gradient(135deg,var(--accent),#ff8a65);color:#fff;box-shadow:0 4px 24px var(--accent-glow)}
+.btn-primary:hover{transform:translateY(-3px);box-shadow:0 8px 36px var(--accent-glow)}
+.btn-outline{background:transparent;color:var(--text-bright);border:2px solid rgba(255,255,255,.2)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-3px)}
+.btn-sm{padding:10px 24px;font-size:.9rem}
+.btn .ripple{
+  position:absolute;border-radius:50%;
+  background:rgba(255,255,255,.35);
+  transform:scale(0);animation:rippleAnim .6s forwards;
+  pointer-events:none;
+}
+@keyframes rippleAnim{to{transform:scale(3);opacity:0}}
+
+.intro-section{padding:60px 24px;position:relative;z-index:1}
+.intro-card{
+  max-width:900px;margin:0 auto;
+  background:var(--glass);border:1px solid var(--border);border-radius:18px;
+  padding:40px 36px;backdrop-filter:blur(10px);
+}
+.intro-card h2{color:#fff;font-size:1.8rem;margin-bottom:18px;text-align:center}
+.intro-card h3{color:var(--accent);font-size:1.1rem;margin:22px 0 10px}
+.intro-card p,.intro-card li{color:rgba(255,255,255,.6);font-size:.95rem;line-height:1.8}
+.intro-card ul{padding-left:20px;margin:6px 0 0}
+.intro-card ul li{margin-bottom:6px}
+
+.section{padding:80px 24px;position:relative;z-index:1}
+.section-header{text-align:center;margin-bottom:56px}
+.section-tag{display:inline-block;font-size:.8rem;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.section-title{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;color:#fff}
+.container{max-width:1200px;margin:0 auto}
+
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.feature-card{
+  position:relative;background:var(--glass);border:1px solid var(--border);border-radius:16px;
+  padding:36px 28px;backdrop-filter:blur(8px);
+  opacity:0;transform:translateY(40px) scale(.95);
+  transition:.6s ease;
+}
+.feature-card.visible{opacity:1;transform:none}
+.feature-card::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(255,112,67,.08),transparent 60%);opacity:0;transition:.35s}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,rgba(255,112,67,.15),rgba(124,77,255,.15));display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:18px;transition:.35s}
+.feature-card:hover .feature-icon{transform:scale(1.1) rotate(-5deg)}
+.feature-card h3{font-size:1.15rem;color:#fff;margin-bottom:10px}
+.feature-card p{font-size:.9rem;color:rgba(255,255,255,.55);line-height:1.7}
+
+.cta{background:linear-gradient(135deg,rgba(255,112,67,.08),rgba(124,77,255,.08));border-top:1px solid var(--border);border-bottom:1px solid var(--border);text-align:center}
+.cta .section-title{margin-bottom:12px}
+.cta-sub{color:rgba(255,255,255,.5);font-size:.95rem;margin-bottom:32px}
+
+.community-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px}
+.community-card{background:var(--glass);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center;backdrop-filter:blur(8px);transition:.3s}
+.community-card:hover{transform:translateY(-6px);box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.community-card .c-icon{font-size:2.4rem;margin-bottom:14px;background:linear-gradient(135deg,var(--accent),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.community-card h3{color:#fff;margin-bottom:8px}
+.community-card p{color:rgba(255,255,255,.5);font-size:.9rem;margin-bottom:18px}
+
+.modal-overlay{
+  position:fixed;inset:0;z-index:999;
+  background:rgba(0,0,0,.65);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:.3s;
+}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.modal{
+  background:var(--bg-deep);border:1px solid var(--border);border-radius:18px;
+  padding:36px 32px;width:94%;max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+  transform:translateY(30px) scale(.96);transition:.35s;
+}
+.modal-overlay.active .modal{transform:none}
+.modal h2{color:#fff;text-align:center;margin-bottom:6px}
+.modal .modal-sub{text-align:center;color:rgba(255,255,255,.4);font-size:.85rem;margin-bottom:24px}
+.modal-form{display:flex;flex-direction:column;gap:16px}
+.modal-form label{font-size:.85rem;color:rgba(255,255,255,.6)}
+.modal-form input{
+  padding:12px 16px;border-radius:10px;border:1px solid var(--border);
+  background:rgba(255,255,255,.05);color:#fff;font-size:.95rem;
+  outline:none;transition:.3s;
+}
+.modal-form input:focus{border-color:var(--accent)}
+.modal-form button{margin-top:8px}
+.modal-close{
+  position:absolute;top:16px;right:18px;background:none;border:none;
+  color:rgba(255,255,255,.4);font-size:1.4rem;cursor:pointer;transition:.3s;
+}
+.modal-close:hover{color:#fff}
+.modal-agree{font-size:.8rem;color:rgba(255,255,255,.4);text-align:center;margin-top:4px}
+.modal-agree a{color:var(--accent);text-decoration:underline}
+
+.agreement-page{padding:120px 24px 80px;max-width:860px;margin:0 auto}
+.agree-card{
+  background:var(--glass);border:1px solid var(--border);border-radius:18px;
+  padding:44px 36px;backdrop-filter:blur(10px);
+}
+.agree-card h1{color:#fff;font-size:1.8rem;margin-bottom:6px;text-align:center}
+.agree-card .agree-meta{text-align:center;color:rgba(255,255,255,.35);font-size:.85rem;margin-bottom:28px}
+.agree-card h2{color:var(--accent);font-size:1.15rem;margin:26px 0 10px}
+.agree-card p,.agree-card li{color:rgba(255,255,255,.6);font-size:.93rem;line-height:1.85}
+.agree-card ul{padding-left:20px;margin:6px 0 0}
+.agree-card strong{color:rgba(255,255,255,.85)}
+.back-top{text-align:center;margin-top:32px}
+
+footer{text-align:center;padding:40px 24px;border-top:1px solid var(--border);color:rgba(255,255,255,.3);font-size:.85rem;position:relative;z-index:1}
+.footer-social{margin-bottom:12px}
+.footer-social a{font-size:1.3rem;margin:0 8px;color:rgba(255,255,255,.3);transition:.3s}
+.footer-social a:hover{color:var(--accent)}
+
+@media(max-width:768px){
+  .nav-links{display:none}
+  .btn-group{flex-direction:column;align-items:center}
+  .btn{width:80%;max-width:300px;justify-content:center}
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="particles"></canvas>
+
+<header id="header">
+  <nav>
+    <div class="logo">
+      <img src="IMG_20260611_121703.jpg" alt="JTA Logo"> JTA Launcher
+    </div>
+    <ul class="nav-links">
+      <li><a href="#home">首页</a></li>
+      <li><a href="#intro">介绍</a></li>
+      <li><a href="#features">特性</a></li>
+      <li><a href="#download">下载</a></li>
+      <li><a href="#agreement">用户协议</a></li>
+      <li><a href="https://github.com/xkdzg65c8f-star/-JTA-Launcher-" target="_blank">GitHub</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section id="home" class="hero">
+  <div class="float-block"></div><div class="float-block"></div>
+  <div class="float-block"></div><div class="float-block"></div>
+  <div class="hero-inner">
+    <div class="hero-badge">🚀 v1.0.0 正式发布 · 雷科工作室出品</div>
+    <h1></h1>
+    <p class="hero-desc">
+      工业级 Windows 原生编译 · 全链路 OAuth2.0 安全合规 · 无缝对接 Modrinth 生态<br>
+      为 Minecraft 玩家打造的极致启动体验
+    </p>
+    <div class="entry-grid" style="margin-top:36px">
+      <div class="entry-card" onclick="openModal('registerModal')">
+        <div class="e-icon">📝</div>
+        <h3>注册 JTA 账号</h3>
+        <p>无需验证，一键注册，直接可用</p>
+      </div>
+      <div class="entry-card" onclick="location.href='#intro'">
+        <div class="e-icon">📖</div>
+        <h3>了解 JTA 启动器</h3>
+        <p>产品理念、技术栈与雷科工作室</p>
+      </div>
+      <div class="entry-card" onclick="location.href='#download'">
+        <div class="e-icon">⬇️</div>
+        <h3>直接下载</h3>
+        <p>跳过介绍，立刻获取客户端</p>
+      </div>
+    </div>
+    <div class="btn-group" style="margin-top:36px">
+      <a href="#download" class="btn btn-primary">⬇️ 立即下载 v1.0.0</a>
+      <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=Rm%2B3VnLs90UO2qUyWrby87Ug%2BTbHLG8amXCcG%2B7DogANjI6wKiTYwt7r6px2zc%2Br&busi_data=eyJncm91cENvZGUiOiIxMDQxODAwODA3IiwidG9rZW4iOiJhaWUzamNsaHNHMFRGRGhGQUFTVWlpMThqL2V0d2RnTE0wMEYzT0p1aG5aOWFjTHlzNmNNU1hteFNmeGxRS1JmIiwidWluIjoiMjY0OTg2NDg3MCJ9&data=AKYGNV1wXuH2xD5ocXktlt89iveufvkmW0zUYKS5g1469Z4axAwxJ_Y6fNRkxO3jChqxAEJo1ZW3EtBRNQWKQQ&svctype=4&tempid=h5_group_info"
+         target="_blank" class="btn btn-outline">💬 加入官方QQ群</a>
+    </div>
+  </div>
+</section>
+
+<section id="intro" class="intro-section">
+  <div class="intro-card">
+    <h2>关于 JTA 启动器</h2>
+    <h3>🎯 产品定位</h3>
+    <p>JTA 启动器由<strong>雷科工作室</strong>研发，专注 Windows 本机性能与合规体验，不做 Java 壳，直接对标工业级启动器标准。</p>
+    <h3>🏗️ 技术栈</h3>
+    <ul>
+      <li>Windows x86/x64 本机编译</li>
+      <li>OAuth2.0 微软官方认证</li>
+      <li>Modrinth 官方 API 直连</li>
+      <li>自研多线程下载内核</li>
+      <li>GitHub 开源托管</li>
+    </ul>
+    <h3>👥 雷科工作室</h3>
+    <p>快手官方账号「懒羊羊的美食梦」同步更新开发日常。保留追究一切造谣、仿冒、恶意抹黑行为的法律责任。</p>
+  </div>
+</section>
+
+<section id="features" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Why JTA</div>
+      <h2 class="section-title">为什么选择 JTA 启动器</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>工业级原生支持</h3>
+        <p>非 Java 封装，根治高版本光影卡顿与内存溢出。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>全链路安全合规</h3>
+        <p>OAuth2.0 官方认证，不碰密码，无劫持无夹带。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧩</div>
+        <h3>Modrinth 生态直连</h3>
+        <p>一键搜索 / 下载 / 安装模组与资源包。</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚄</div>
+        <h3>极速下载引擎</h3>
+        <p>自研多线程内核，智能分流，跑满带宽。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="download" class="section cta">
+  <div class="container">
+    <div class="section-tag">Release</div>
+    <h2 class="section-title">获取 JTA Launcher</h2>
+    <p class="cta-sub">构建 x514905 · Windows x86/x64 · v1.0.0</p>
+    <div class="btn-group">
+      <a href="https://github.com/xkdzg65c8f-star/-JTA-Launcher-/releases/download/V1.0.0/x514905-Windows-i-Core4201-x86x64-v100-41w.zip"
+         class="btn btn-primary">⬇️ 下载客户端 (.zip)</a>
+      <a href="https://github.com/xkdzg65c8f-star/-JTA-Launcher-"
+         target="_blank" class="btn btn-outline">🐙 查看 GitHub 源码</a>
+    </div>
+  </div>
+</section>
+
+<section id="community" class="section">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">Community</div>
+      <h2 class="section-title">雷科工作室社区</h2>
+    </div>
+    <div class="community-grid">
+      <div class="community-card">
+        <div class="c-icon">🎬</div>
+        <h3>快手官方账号</h3>
+        <p>关注「懒羊羊的美食梦」获取最新动态</p>
+        <a href="https://v.kuaishou.com/KjIxzZZc" target="_blank" class="btn btn-outline btn-sm">去快手关注</a>
+      </div>
+      <div class="community-card">
+        <div class="c-icon">💬</div>
+        <h3>官方交流群</h3>
+        <p>与开发者和其他玩家直接交流</p>
+        <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=Rm%2B3VnLs90UO2qUyWrby87Ug%2BTbHLG8amXCcG%2B7DogANjI6wKiTYwt7r6px2zc%2Br&busi_data=eyJncm91cENvZGUiOiIxMDQxODAwODA3IiwidG9rZW4iOiJhaWUzamNsaHNHMFRGRGhGQUFTVWlpMThqL2V0d2RnTE0wMEYzT0p1aG5aOWFjTHlzNmNNU1hteFNmeGxRS1JmIiwidWluIjoiMjY0OTg2NDg3MCJ9&data=AKYGNV1wXuH2xD5ocXktlt89iveufvkmW0zUYKS5g1469Z4axAwxJ_Y6fNRkxO3jChqxAEJo1ZW3EtBRNQWKQQ&svctype=4&tempid=h5_group_info"
+           target="_blank" class="btn btn-outline btn-sm">加入 QQ 群</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="agreement" class="agreement-page">
+  <div class="agree-card">
+    <h1>JTA 启动器用户协议</h1>
+    <p class="agree-meta">雷科工作室 · 生效日期 2026 年 · 版本 v1.0</p>
+    <h2>一、协议范围</h2>
+    <p>本协议适用于 JTA 启动器的所有用户。</p>
+    <h2>二、账号规则</h2>
+    <p>注册账号无需邮箱验证，账号所有权归雷科工作室所有，用户仅拥有使用权。工作室保留对违规账号的封禁权利。</p>
+    <h2>三、知识产权</h2>
+    <p>JTA 启动器著作权归雷科工作室所有。Minecraft 为 Mojang / Microsoft 商标，本软件为独立第三方工具。</p>
+    <h2>四、免责声明</h2>
+    <p>本软件按“现状”提供，不对游戏崩溃、存档损坏负责。使用第三方模组产生的版权风险由用户自行承担。</p>
+    <h2>五、禁止行为</h2>
+    <ul>
+      <li>逆向工程、破解、篡改本软件；</li>
+      <li>冒充雷科工作室发布修改版或收费版；</li>
+      <li>利用本软件从事违法行为。</li>
+    </ul>
+    <h2>六、争议解决</h2>
+    <p>适用中华人民共和国法律，争议提交工作室所在地法院诉讼解决。</p>
+    <div class="back-top">
+      <a href="#home" class="btn btn-outline btn-sm">返回首页 ↑</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-social">
+    <a href="https://github.com/xkdzg65c8f-star/-JTA-Launcher-" target="_blank">GH</a>
+    <a href="https://v.kuaishou.com/KjIxzZZc" target="_blank">快手</a>
+    <a href="https://qun.qq.com/universal-share/share?ac=1&authKey=Rm%2B3VnLs90UO2qUyWrby87Ug%2BTbHLG8amXCcG%2B7DogANjI6wKiTYwt7r6px2zc%2Br&busi_data=eyJncm91cENvZGUiOiIxMDQxODAwODA3IiwidG9rZW4iOiJhaWUzamNsaHNHMFRGRGhGQUFTVWlpMThqL2V0d2RnTE0wMEYzT0p1aG5aOWFjTHlzNmNNU1hteFNmeGxRS1JmIiwidWluIjoiMjY0OTg2NDg3MCJ9&data=AKYGNV1wXuH2xD5ocXktlt89iveufvkmW0zUYKS5g1469Z4axAwxJ_Y6fNRkxO3jChqxAEJo1ZW3EtBRNQWKQQ&svctype=4&tempid=h5_group_info" target="_blank">QQ</a>
+  </div>
+  © 2026 雷科工作室 · 保留追究造谣者法律责任的权利<br>
+  <span style="font-size:.78rem">仅支持 Windows 10 / 11 / 12 · 代码托管于 GitHub</span>
+</footer>
+
+<div class="modal-overlay" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('registerModal')">✕</button>
+    <h2>注册 JTA 账号</h2>
+    <p class="modal-sub">无需验证，注册即可使用</p>
+    <form class="modal-form" onsubmit="handleRegister(event)">
+      <label>用户名</label>
+      <input type="text" placeholder="请输入用户名" required>
+      <label>密码</label>
+      <input type="password" placeholder="请输入密码" required>
+      <p class="modal-agree">注册即代表同意 <a href="#agreement">《JTA 用户协议》</a></p>
+      <button type="submit" class="btn btn-primary" style="width:100%">注册账号</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const canvas=document.getElementById('particles'),ctx=canvas.getContext('2d');
+let W,H,stars=[];
+function resize(){W=canvas.width=innerWidth;H=canvas.height=innerHeight}
+resize();window.addEventListener('resize',resize);
+for(let i=0;i<160;i++)stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.2+.3,a:Math.random(),da:(Math.random()-.5)*.02,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15});
+(function draw(){ctx.clearRect(0,0,W,H);stars.forEach(s=>{s.a+=s.da;if(s.a>1||s.a<.1)s.da*=-1;s.x+=s.vx;s.y+=s.vy;if(s.x<0)s.x=W;if(s.x>W)s.x=0;if(s.y<0)s.y=H;if(s.y>H)s.y=0;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,255,${s.a*.7})`;ctx.fill()});requestAnimationFrame(draw)})();
+
+const header=document.getElementById('header');
+window.addEventListener('scroll',()=>header.classList.toggle('scrolled',scrollY>60));
+
+document.querySelectorAll('.btn').forEach(b=>b.addEventListener('click',e=>{
+  const r=b.getBoundingClientRect(),o=document.createElement('span');o.className='ripple';
+  const sz=Math.max(r.width,r.height);
+  o.style.width=o.style.height=sz+'px';o.style.left=e.clientX-r.left-sz/2+'px';o.style.top=e.clientY-r.top-sz/2+'px';
+  b.appendChild(o);o.addEventListener('animationend',()=>o.remove());
+}));
+
+function openModal(id){document.getElementById(id).classList.add('active')}
+function closeModal(id){document.getElementById(id).classList.remove('active')}
+document.getElementById('registerModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal('registerModal')});
+
+function handleRegister(e){
+  e.preventDefault();
+  alert('🎉 注册成功！\n\n（前端演示模式）');
+  closeModal('registerModal');
+}
+
+const typeText="JTA 启动器.";
+const typedEl=document.createElement('span');
+typedEl.innerHTML='<span class="typed-cursor"></span>';
+document.querySelector('.hero h1').appendChild(typedEl);
+let i=0;
+(function typeWriter(){if(i<typeText.length){typedEl.innerHTML=typeText.slice(0,i+1)+'<span class="typed-cursor"></span>';i++;setTimeout(typeWriter,120)}})();
+
+const hero=document.querySelector('.hero');
+hero.addEventListener('mousemove',e=>{
+  const r=hero.getBoundingClientRect();
+  const mx=(e.clientX-r.left)/r.width*100;
+  const my=(e.clientY-r.top)/r.height*100;
+  hero.style.setProperty('--mx',mx+'%');
+  hero.style.setProperty('--my',my+'%');
+  hero.style.setProperty('--mx2',(100-mx)+'%');
+  hero.style.setProperty('--my2',(100-my)+'%');
+});
+
+const cards=document.querySelectorAll('.feature-card');
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target)}});
+},{threshold:.15});
+cards.forEach(c=>observer.observe(c));
+</script>
+
+</body>
+</html>
